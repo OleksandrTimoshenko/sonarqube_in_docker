@@ -1,5 +1,15 @@
 version: "3.7"
 
+services:
+  nginx:
+    image: nginx:1.19.0-alpine
+    volumes:
+      - /opt/nginx:/etc/nginx/conf.d
+    ports:
+      - 80:80
+    depends_on:
+      - sonarqube
+
   sonarqube:
     image: sonarqube:8.2-community
     depends_on:
@@ -17,9 +27,6 @@ version: "3.7"
       resources:
         limits:
           memory: 4000M
-    ports: 
-      - 9000:9000
-
   db:
     image: postgres
     environment:
