@@ -48,6 +48,24 @@
       loop:
         - docker-compose.yml
 
+    - name: Delete old Nginx directory
+      file:
+        path: /opt/nginx/
+        state: absent
+
+    - name: Create new Nginx directiry
+      file:
+        path: /opt/nginx
+        state: directory
+        mode: 0775
+
+    - name: Copy Nginx config
+      copy:
+        src: ./nginx/{{ item }}
+        dest: /opt/nginx/{{ item }}
+      with_items:
+        - sonarqube.conf
+
     - name: Copy sequires script
       copy:
         src: ./requires.sh
@@ -65,3 +83,11 @@
         with_registry_auth: yes
         compose:
           - /opt/docker-compose.yml
+
+    # The first try can fail, because Nginx can`t find configs
+    - name: Update Nginx service
+      shell: docker service update --force "{{ project_name }}-stack_nginx"
+      register: result
+      retries: 2
+      delay: 3
+      until: result is not failed
