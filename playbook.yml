@@ -1,0 +1,67 @@
+- name: server
+  hosts: all
+  become: True
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    project_name: "sonarqube"
+
+  pre_tasks:
+    - name: Wait for system to become reachable
+      wait_for_connection:
+
+    - name: Gather facts for first time
+      setup:
+    - apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+    - name: Install pip3
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+    - pip:
+        name: "{{ packeges }}"
+        executable: pip3
+      vars:
+        packeges:
+          - docker
+          - docker-compose
+          - jsondiff
+  roles:
+    - role: geerlingguy.docker
+      docker_install_compose: true
+
+  tasks:
+
+    - name: Init a new swarm with default parameters
+      docker_swarm:
+        state: present
+        # only for local testing with Vagrant
+        advertise_addr: "10.2.2.25"
+
+    - name: Copy compose file
+      copy:
+        src: "./{{ item }}"
+        dest: "/opt/{{ item }}"
+      loop:
+        - docker-compose.yml
+
+    - name: Copy sequires script
+      copy:
+        src: ./requires.sh
+        dest: /opt/requires.sh
+        mode: u+x
+
+    - name: set host requires for sonar
+      shell: /opt/requires.sh
+
+    - name: Deploy sonarqube stack from a compose file
+      docker_stack:
+        state: present
+        prune: yes
+        name: "{{ project_name }}-stack"
+        with_registry_auth: yes
+        compose:
+          - /opt/docker-compose.yml
