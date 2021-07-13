@@ -75,6 +75,11 @@
     - name: set host requires for sonar
       shell: /opt/requires.sh
 
+    - name: Copy .env file
+      copy:
+        src: ./.env
+        dest: /opt/.env
+
     - name: Deploy sonarqube stack from a compose file
       docker_stack:
         state: present
