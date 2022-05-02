@@ -39,7 +39,7 @@
       docker_swarm:
         state: present
         # only for local testing with Vagrant
-        advertise_addr: "10.2.2.25"
+        advertise_addr: "192.168.0.160"
 
     - name: Copy compose file
       copy:
